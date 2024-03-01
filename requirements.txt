@@ -1,0 +1,4 @@
+﻿langchain==0.1.4
+pinecone-client==3.0.1
+pypdf==4.0.1
+sentence-transformers
