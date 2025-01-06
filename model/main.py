@@ -3,7 +3,11 @@ from PyPDF2 import PdfReader
 import math
 from transformers import (
     MBartForConditionalGeneration,
-    MBart50TokenizerFast,
+    # MBart50TokenizerFast,
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    BitsAndBytesConfig,
+    pipeline,
 )
 from getpass import getpass
 import torch
@@ -11,8 +15,6 @@ from torch.cuda.amp import autocast
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone, ServerlessSpec
 from huggingface_hub import login
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import BitsAndBytesConfig, pipeline
 import re
 
 
@@ -35,7 +37,7 @@ def read_pdf(file_path):
 
 
 # Function to split content into chunks
-def create_chunks(text, chunk_size=3000, overlap=500):
+def create_chunks(text, chunk_size, overlap):
     """
     Splits text into chunks with overlapping context.
 
@@ -73,60 +75,55 @@ def create_chunks(text, chunk_size=3000, overlap=500):
     return chunks
 
 
-file_path = "./Documents/AFFAIRE C.P. ET M.N. c. FRANCE.pdf"
+file_path = "/content/CASE OF ANAGNOSTAKIS v. GREECE.pdf"
 document_text = read_pdf(file_path)
 chunks = create_chunks(document_text, chunk_size=3000, overlap=500)
 
-print(f"Total number of chunks: {len(chunks)}")
+len(chunks)
 
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = getpass("Enter your Hugging Face API token: ")
 
 model_name = "facebook/mbart-large-50-many-to-one-mmt"
+# model = MBartForConditionalGeneration.from_pretrained(model_name).to("cuda" if torch.cuda.is_available() else "cpu")
 model = MBartForConditionalGeneration.from_pretrained(model_name)
-tokenizer = MBart50TokenizerFast.from_pretrained(model_name)
+# tokenizer = MBart50TokenizerFast.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
 
 
-def translate_chunks(chunks, src_lang="fr_XX", batch_size=8):
+# Function to translate chunks into English
+def translate_chunks(chunks, batch_size):
     """
     Translates a list of text chunks into English using MBart50.
 
     Args:
         chunks (list): List of text chunks in the source language.
-        src_lang (str): Source language code.
         batch_size (int): Number of chunks to process in a single batch.
 
     Returns:
         list: Translated text chunks in English.
     """
     translations = []
-    tokenizer.src_lang = src_lang
-
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i : i + batch_size]
         encoded_input = tokenizer(
             batch, return_tensors="pt", padding=True, truncation=True
-        ).to(device)
+        ).to(model.device)
 
         with autocast():
             generated_tokens = model.generate(
-                **encoded_input,
-                max_length=128,
-                num_beams=1,
+                **encoded_input, max_length=128, num_beams=1
             )
 
-        batch_translations = tokenizer.batch_decode(
-            generated_tokens, skip_special_tokens=True
+        translations.extend(
+            tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
         )
-        translations.extend(batch_translations)
-
     return translations
 
 
-# Chunk translation
-translated_chunks = translate_chunks(chunks, src_lang="fr_XX", batch_size=8)
+translated_chunks = translate_chunks(chunks, batch_size=8)
 
 for i, translation in enumerate(translated_chunks, 1):
     print(f"Chunk {i} Translation:\n{translation}\n")
@@ -258,10 +255,26 @@ def generate_legal_response(question, index, embedding_model, llm, top_k=5):
     return cleaned_response
 
 
-question = (
-    "What were the key legal arguments in the case AFFAIRE C.P. ET M.N. c. FRANCE?"
-)
+question = "What were the key legal arguments in the case ANAGNOSTAKIS v. GREECE?"
 
 response = generate_legal_response(question, index, embedding_model, llm, top_k=5)
 
 print(response)
+
+# question = "What was the main issue in the case of C.P. and M.N. v. France?"
+
+# response = generate_legal_response(question, index, embedding_model, llm, top_k=5)
+
+# print(response)
+
+# question = "Why did the French courts declare the applicant’s paternity challenge inadmissible?"
+
+# response = generate_legal_response(question, index, embedding_model, llm, top_k=5)
+
+# print(response)
+
+# question = "What was the European Court of Human Rights’ (ECtHR) decision in this case?"
+
+# response = generate_legal_response(question, index, embedding_model, llm, top_k=5)
+
+# print(response)
