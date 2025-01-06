@@ -8,6 +8,8 @@ from transformers import (
 from getpass import getpass
 import torch
 from torch.cuda.amp import autocast
+from sentence_transformers import SentenceTransformer
+from pinecone import Pinecone, ServerlessSpec
 
 
 # Function to read the PDF content
@@ -124,3 +126,27 @@ translated_chunks = translate_chunks(chunks, src_lang="fr_XX", batch_size=8)
 
 for i, translation in enumerate(translated_chunks, 1):
     print(f"Chunk {i} Translation:\n{translation}\n")
+
+pc = Pinecone(api_key=getpass("Enter your Pinecone API token: "))
+
+index_name = "legal-llm"
+if index_name in pc.list_indexes().names():
+    pc.delete_index(index_name)
+
+pc.create_index(
+    name=index_name,
+    dimension=384,
+    metric="cosine",
+    spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+)
+
+index = pc.Index(index_name)
+
+embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+embeddings = embedding_model.encode(translated_chunks)
+
+for i, chunk in enumerate(translated_chunks):
+    index.upsert(vectors=[(f"doc_{i}", embeddings[i], {"text": chunk})])
+
+print("Translated chunks embedded and stored in Pinecone.")
