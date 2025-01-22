@@ -1,14 +1,15 @@
-from fastapi import FastAPI, UploadFile, HTTPException
-from io import BytesIO
-from PyPDF2 import PdfReader
 import os
-from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
-from torch.amp import autocast
 import torch
 import uvicorn
 import magic
-from time import time
+
+from torch.amp import autocast
+from fastapi import FastAPI, UploadFile, HTTPException
+from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
 from contextlib import asynccontextmanager
+from io import BytesIO
+from PyPDF2 import PdfReader
+from time import time
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
