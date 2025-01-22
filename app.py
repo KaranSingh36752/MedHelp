@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, HTTPException
 from io import BytesIO
 from PyPDF2 import PdfReader
-# import os
+import os
 
 # import math
 from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
@@ -10,6 +10,8 @@ import torch
 import uvicorn
 import magic
 from time import time
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -102,7 +104,7 @@ def translate_chunks(chunks, batch_size):
 # Endpoints
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the PDF Translation API!"}
+    return {"message": "Welcome to the LegalDoc-Translate-Query-Assistant portal!"}
 
 
 @app.post("/process-pdf/")
