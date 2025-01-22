@@ -2,27 +2,38 @@ from fastapi import FastAPI, UploadFile, HTTPException
 from io import BytesIO
 from PyPDF2 import PdfReader
 import os
-
-# import math
 from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 import torch
 import uvicorn
 import magic
 from time import time
+from contextlib import asynccontextmanager
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Initialize the translation model
 model_name = "facebook/mbart-large-50-many-to-one-mmt"
-model = MBartForConditionalGeneration.from_pretrained(model_name)
-tokenizer = MBart50TokenizerFast.from_pretrained(model_name)
-
+model = None
+tokenizer = None
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model.to(device)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global model, tokenizer
+    model = MBartForConditionalGeneration.from_pretrained(model_name).to(device)
+    tokenizer = MBart50TokenizerFast.from_pretrained(model_name)
+    print("Model and tokenizer loaded.")
+    yield
+    del model
+    del tokenizer
+    print("Model and tokenizer resources released.")
+
+
+app.router.lifespan_context = lifespan
 
 
 # Function to detect MIME type
@@ -72,25 +83,16 @@ def create_chunks(text: str, chunk_size: int, overlap: int):
     return chunks
 
 
+# Function to translate chunks
 def translate_chunks(chunks, batch_size):
-    """
-    Translates a list of text chunks into English using MBart50.
-
-    Args:
-        chunks (list): List of text chunks in the source language.
-        batch_size (int): Number of chunks to process in a single batch.
-
-    Returns:
-        list: Translated text chunks in English.
-    """
     translations = []
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i : i + batch_size]
         encoded_input = tokenizer(
-            batch, return_tensors="pt", padding=True, truncation=True
+            batch, return_tensors="pt", padding=True, truncation=True, max_length=1024
         ).to(device)
 
-        with autocast(enabled=torch.cuda.is_available()):
+        with autocast(device_type="cuda" if torch.cuda.is_available() else "cpu"):
             generated_tokens = model.generate(
                 encoded_input["input_ids"], max_length=128, num_beams=1
             )
@@ -101,7 +103,7 @@ def translate_chunks(chunks, batch_size):
     return translations
 
 
-# Endpoints
+# API Endpoints
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the LegalDoc-Translate-Query-Assistant portal!"}
