@@ -1,5 +1,6 @@
-﻿langchain
-transformers
-sentence-transformers
-PyPDF2
-pinecone-client
+﻿fastapi==0.100.0
+uvicorn[standard]==0.22.0
+transformers==4.34.0
+torch==2.0.1
+python-magic==0.4.27
+PyPDF2==3.0.0
