@@ -4,19 +4,25 @@ import uvicorn
 import magic
 
 from torch.amp import autocast
-from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks
 from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
-from contextlib import asynccontextmanager
+from sentence_transformers import SentenceTransformer
+from pinecone import Pinecone, ServerlessSpec
 from io import BytesIO
 from PyPDF2 import PdfReader
+
+from contextlib import asynccontextmanager
 from time import time
+from dotenv import load_dotenv
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
 
-model_name = "facebook/mbart-large-50-many-to-one-mmt"
+translation_model = "facebook/mbart-large-50-many-to-one-mmt"
 model = None
 tokenizer = None
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -25,8 +31,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model, tokenizer
-    model = MBartForConditionalGeneration.from_pretrained(model_name).to(device)
-    tokenizer = MBart50TokenizerFast.from_pretrained(model_name)
+    model = MBartForConditionalGeneration.from_pretrained(translation_model).to(device)
+    tokenizer = MBart50TokenizerFast.from_pretrained(translation_model)
     print("Model and tokenizer loaded.")
     yield
     del model
@@ -104,6 +110,61 @@ def translate_chunks(chunks, batch_size):
     return translations
 
 
+def store_in_pinecone(translated_chunks):
+    """
+    Converts translated text into embeddings and stores them in Pinecone.
+
+    Args:
+        translated_chunks (list): List of translated text chunks.
+    """
+    try:
+        # Retrieve the Pinecone API key from the .env file
+        pinecone_api_key = os.getenv("PINECONE_API_KEY")
+        if not pinecone_api_key:
+            raise ValueError(
+                "PINECONE_API_KEY not found in environment variables. Ensure it is set in the .env file."
+            )
+
+        # Initialize Pinecone connection
+        pc = Pinecone(api_key=pinecone_api_key)
+
+        index_name = "legal-llm-portal"
+
+        # Check if the index exists and delete it for a clean slate (optional)
+        if index_name in pc.list_indexes().names():
+            pc.delete_index(index_name)
+
+        # Create a new index
+        pc.create_index(
+            name=index_name,
+            dimension=384,  # Dimension size for the 'all-MiniLM-L6-v2' model
+            metric="cosine",  # Using cosine similarity for comparisons
+            spec=ServerlessSpec(
+                cloud="aws", region="us-east-1"
+            ),  # Adjust cloud and region as needed
+        )
+
+        # Connect to the index
+        index = pc.Index(index_name)
+
+        # Initialize the embedding model
+        embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+        # Generate embeddings for the translated chunks
+        embeddings = embedding_model.encode(translated_chunks)
+
+        # Upsert embeddings into Pinecone
+        for i, chunk in enumerate(translated_chunks):
+            index.upsert(vectors=[(f"doc_{i}", embeddings[i], {"text": chunk})])
+
+        print("Translated chunks embedded and stored in Pinecone.")
+
+    except Exception as e:
+        print(f"Error storing embeddings in Pinecone: {str(e)}")
+
+    return index_name
+
+
 # API Endpoints
 @app.get("/")
 def read_root():
@@ -112,8 +173,15 @@ def read_root():
 
 @app.post("/process-pdf/")
 async def process_pdf(
-    file: UploadFile, chunk_size: int = 500, overlap: int = 50, batch_size: int = 2
+    file: UploadFile,
+    background_tasks: BackgroundTasks,  # Add background task support
+    chunk_size: int = 500,
+    overlap: int = 50,
+    batch_size: int = 2,
 ):
+    """
+    Endpoint to process the PDF, translate chunks, and asynchronously store embeddings.
+    """
     mime_type = get_mime_type(file)
     if mime_type != "application/pdf":
         raise HTTPException(
@@ -124,16 +192,22 @@ async def process_pdf(
         raise HTTPException(status_code=400, detail="File size exceeds 10 MB.")
 
     try:
+        # Step 1: Process the PDF and translate chunks
         start_time = time()
         text = read_pdf(file)
         chunks = create_chunks(text, chunk_size, overlap)
         translated_chunks = translate_chunks(chunks, batch_size)
         processing_time = time() - start_time
 
+        # Step 2: Store embeddings in Pinecone in the background
+        background_tasks.add_task(store_in_pinecone, translated_chunks)
+
+        # Step 3: Return immediate response with translated chunks
         return {
             "mime_type": mime_type,
             "translated_chunks": translated_chunks,
             "processing_time": f"{processing_time:.2f} seconds",
+            "pinecone_status": "Embedding storage initiated in the background.",
         }
     except Exception as e:
         raise HTTPException(
