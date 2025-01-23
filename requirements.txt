@@ -1,5 +1,0 @@
-﻿langchain
-transformers
-sentence-transformers
-PyPDF2
-pinecone-client
