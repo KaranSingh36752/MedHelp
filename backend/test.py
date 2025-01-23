@@ -4,7 +4,7 @@ import json
 url = "http://127.0.0.1:8000/translate-pdf/"
 
 # File path to the PDF
-file_path = "/home/darshil-thakkar-929/Desktop/Projects/LegalDoc-Translate-Query-Assistant/Documents/test.pdf"
+file_path = "/home/darshil-thakkar-929/Desktop/Projects/LegalDoc-Translate-Query-Assistant/documents/test.pdf"
 
 try:
     with open(file_path, "rb") as f:
