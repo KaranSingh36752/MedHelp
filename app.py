@@ -10,10 +10,14 @@ from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone, ServerlessSpec
 from io import BytesIO
 from PyPDF2 import PdfReader
+from pydantic import BaseModel
 
 from contextlib import asynccontextmanager
+from pydantic import Field
 from time import time
 from dotenv import load_dotenv
+
+from rag_pipeline import RAGPipeline
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
@@ -22,12 +26,36 @@ load_dotenv()
 # Initialize FastAPI app
 app = FastAPI()
 
+# Translation model and resources
 translation_model = "facebook/mbart-large-50-many-to-one-mmt"
 model = None
 tokenizer = None
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+# Initialize RAG pipeline
+pinecone_api_key = os.getenv("PINECONE_API_KEY")
+pinecone_env = os.getenv("PINECONE_ENV", "aws")
+groq_api_key = os.getenv("GROQ_API_KEY")
 
+rag_pipeline = RAGPipeline(
+    embedding_model_name="all-MiniLM-L6-v2",
+    pinecone_api_key=pinecone_api_key,
+    pinecone_env=pinecone_env,
+    groq_api_key=groq_api_key,
+)
+
+
+# Pydantic model for query request
+class QueryRequest(BaseModel):
+    user_query: str = Field(
+        ...,
+        min_length=5,
+        title="User Query",
+        description="The legal question to be analyzed",
+    )
+
+
+# Asynchronous context manager to load and release model resources
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model, tokenizer
@@ -110,7 +138,8 @@ def translate_chunks(chunks, batch_size):
     return translations
 
 
-def store_in_pinecone(translated_chunks):
+# Function to store embeddings in Pinecone
+def store_embeddings(translated_chunks):
     """
     Converts translated text into embeddings and stores them in Pinecone.
 
@@ -171,7 +200,7 @@ def read_root():
     return {"message": "Welcome to the LegalDoc-Translate-Query-Assistant portal!"}
 
 
-@app.post("/process-pdf/")
+@app.post("/translate-pdf/")
 async def process_pdf(
     file: UploadFile,
     background_tasks: BackgroundTasks,  # Add background task support
@@ -200,7 +229,7 @@ async def process_pdf(
         processing_time = time() - start_time
 
         # Step 2: Store embeddings in Pinecone in the background
-        background_tasks.add_task(store_in_pinecone, translated_chunks)
+        background_tasks.add_task(store_embeddings, translated_chunks)
 
         # Step 3: Return immediate response with translated chunks
         return {
@@ -213,6 +242,28 @@ async def process_pdf(
         raise HTTPException(
             status_code=500, detail=f"Error processing the PDF: {str(e)}"
         )
+
+
+@app.post("/query/")
+async def query_llm(request: QueryRequest):
+    """
+    Endpoint to process user query, retrieve relevant context, and return LLM-generated responses.
+    """
+    try:
+        # Retrieve relevant context from Pinecone
+        context = rag_pipeline.get_context(request.user_query)
+
+        if not context:
+            raise HTTPException(
+                status_code=404, detail="No relevant context found for the query."
+            )
+
+        # Generate response using the retrieved context
+        response = rag_pipeline.generate_response(request.user_query, context)
+
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
 
 
 if __name__ == "__main__":
