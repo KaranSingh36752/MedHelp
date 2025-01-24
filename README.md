@@ -33,7 +33,7 @@ This installs PyTorch along with CUDA 11.8 support for GPU acceleration.
 ### Step 3: Install Required Python Libraries
 
 ```bash
-pip install transformers fastapi uvicorn python-magic PyPDF2 sentence-transformers pinecone-client python-dotenv
+pip install transformers fastapi uvicorn python-magic PyPDF2 sentence-transformers pinecone-client python-dotenv groq
 ```
 
 These libraries are necessary for the following functionalities:
@@ -50,6 +50,7 @@ These libraries are necessary for the following functionalities:
 
 ```bash
 pip install tiktoken protobuf
+pip install python-multipart
 ```
 
 - **`tiktoken`**: Tokenizer library required for processing text efficiently.
