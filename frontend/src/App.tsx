@@ -1,17 +1,21 @@
 import './index.css'
 
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
+
 function App() {
 
   return (
-    <>
-      <div className="App">
-        <header className="App-header">
-          <h1 className="text-3xl font-bold underline">
-            LegalDoc-Translate-Query-Assistant-Portal
-          </h1>
-        </header>
-      </div>
-    </>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <main>LegalDoc-Translate-Query-Assistant-Portal</main>
+    </ThemeProvider>
   )
 }
 
