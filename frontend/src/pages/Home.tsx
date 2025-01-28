@@ -1,20 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, CircularProgress } from "@mui/material";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
   const [selectedPDF, setSelectedPDF] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [translatedChunks, setTranslatedChunks] = useState<string[]>([]);
+  const navigate = useNavigate();
 
-  // Handle file selection
+  useEffect(() => {
+    const savedTranslation = localStorage.getItem("translatedChunks");
+    if (savedTranslation) setTranslatedChunks(JSON.parse(savedTranslation));
+  }, []);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedPDF(event.target.files[0]);
-    }
+    const file = event.target.files?.[0];
+    if (file) setSelectedPDF(file);
   };
 
-  // Handle file upload to the backend
   const handleFileUpload = async () => {
     if (!selectedPDF) {
       alert("Please select a PDF file first.");
@@ -24,79 +28,59 @@ const Home: React.FC = () => {
     const formData = new FormData();
     formData.append("file", selectedPDF);
 
-    setLoading(true); // Show loading screen
+    setLoading(true);
 
     try {
-      const response = await axios.post("https://1743-34-90-206-123.ngrok-free.app/translate-pdf/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const { data } = await axios.post(
+        "https://4b00-34-169-3-56.ngrok-free.app/translate-pdf/",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
 
-      // Extract and clean translated chunks from response
-      const { translated_chunks } = response.data;
-      setTranslatedChunks(translated_chunks);
-
+      setTranslatedChunks(data.translated_chunks);
+      localStorage.setItem("translatedChunks", JSON.stringify(data.translated_chunks));
       alert("File processed successfully! Click OK to view Translated File.");
-      console.log(response.data);
     } catch (error) {
       console.error("Error uploading file:", error);
       alert("Failed to process the file. Please try again.");
     } finally {
-      setLoading(false); // Hide loading screen
+      setLoading(false);
     }
+  };
+
+  const handleClearTranslation = () => {
+    setTranslatedChunks([]);
+    localStorage.removeItem("translatedChunks");
   };
 
   return (
     <Box className="flex justify-center items-center h-[calc(100vh-64px)] bg-gray-900">
       {loading ? (
-        // Loading Screen
-        <Box className="flex justify-center items-center h-full w-full">
-          <CircularProgress color="primary" size={80} />
-        </Box>
+        <CircularProgress color="primary" size={80} />
       ) : (
         <Box className="bg-gray-800 rounded-2xl shadow-2xl w-3/4 h-3/4 min-w-[300px] p-10 flex flex-col justify-evenly items-center overflow-y-auto gap-10">
-          {/* Header Section */}
           <Box className="text-center">
-            <Typography
-              variant="h3"
-              fontWeight="bold"
-              className="mb-4 text-blue-400"
-            >
+            <Typography variant="h3" fontWeight="bold" className="mb-4 text-blue-400">
               WELCOME TO
             </Typography>
-            <Typography
-              variant="h4"
-              fontWeight="bold"
-              className="text-blue-300"
-            >
+            <Typography variant="h4" fontWeight="bold" className="text-blue-300">
               LEGAL-DOC-TRANSLATE-QUERY-ASSISTANT PORTAL
             </Typography>
           </Box>
 
-          {/* Description */}
           <Typography className="text-gray-400 text-center max-w-2xl">
             "LegalDoc-Translate-Query-Assistant Portal enables users to quickly translate legal documents into English and get accurate, context-driven answers via an AI-powered chatbot."
           </Typography>
 
-          {/* Buttons */}
-          <Box className="flex justify-center gap-8 mt-4">
-            {/* Upload a PDF Button */}
+          <Box className="flex justify-center gap-8">
             <Button
               variant="contained"
               component="label"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg"
             >
               UPLOAD A PDF
-              <input
-                type="file"
-                hidden
-                accept="application/pdf"
-                onChange={handleFileChange}
-              />
+              <input type="file" hidden accept="application/pdf" onChange={handleFileChange} />
             </Button>
-
-            {/* Translate Button */}
             <Button
               variant="contained"
               onClick={handleFileUpload}
@@ -106,24 +90,36 @@ const Home: React.FC = () => {
             </Button>
           </Box>
 
-          {/* Display Selected File Name */}
           {selectedPDF && (
             <Typography className="text-gray-400 text-center mt-4">
               Selected PDF: {selectedPDF.name}
             </Typography>
           )}
 
-          {/* Display Translated Chunks */}
           {translatedChunks.length > 0 && (
-            <Box className="bg-gray-700 rounded-xl p-6 mt-6 w-full">
-              <Typography
-                variant="h5"
-                fontWeight="bold"
-                className="text-blue-400 mb-4"
-              >
-                Translated PDF
-              </Typography>
-              <Box className="text-gray-300 text-justify whitespace-pre-wrap">
+            <Box className="bg-gray-700 rounded-xl p-6 w-full">
+              <Box className="flex justify-between items-center">
+                <Typography variant="h5" fontWeight="bold" className="text-blue-400">
+                  Translated PDF
+                </Typography>
+                <Box className="flex gap-4">
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate("/assistant")}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    ASK ASSISTANT
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleClearTranslation}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    CLEAR
+                  </Button>
+                </Box>
+              </Box>
+              <Box className="text-gray-300 text-justify whitespace-pre-wrap mt-4">
                 {translatedChunks.join("\n\n")}
               </Box>
             </Box>
