@@ -12,7 +12,7 @@ import QueryAssistant from "../pages/QueryAssistant";
 
 const navItems = [
   { label: "Home", path: "/" },
-  { label: "Query-Assistant", path: "/query-assistant" },
+  { label: "Assistant", path: "/assistant" },
 ];
 
 export default function Navbar() {
@@ -27,7 +27,7 @@ export default function Navbar() {
               component="div"
               className="flex-grow text-blue-400"
             >
-              LEGAL-QUERY-ASSISTANT
+              LEGAL-ASSISTANT
             </Typography>
             <Box className="hidden sm:flex">
               {navItems.map((item) => (
@@ -50,7 +50,7 @@ export default function Navbar() {
           <Toolbar />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/query-assistant" element={<QueryAssistant />} />
+            <Route path="/assistant" element={<QueryAssistant />} />
           </Routes>
         </Box>
       </Box>
