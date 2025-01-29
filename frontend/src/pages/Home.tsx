@@ -32,7 +32,7 @@ const Home: React.FC = () => {
 
     try {
       const { data } = await axios.post(
-        "https://4b00-34-169-3-56.ngrok-free.app/translate-pdf/",
+        "http://127.0.0.1:8000/translate-pdf/",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
