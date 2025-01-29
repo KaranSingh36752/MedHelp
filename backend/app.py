@@ -5,6 +5,7 @@ import magic
 
 from torch.amp import autocast
 from fastapi import FastAPI, UploadFile, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone, ServerlessSpec
@@ -25,6 +26,15 @@ load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Translation model and resources
 translation_model = "facebook/mbart-large-50-many-to-one-mmt"
