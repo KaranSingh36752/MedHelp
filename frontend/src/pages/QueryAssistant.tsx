@@ -18,7 +18,7 @@ const ChatScreen: React.FC = () => {
     setCurrentMessage("");
 
     try {
-      const { data } = await axios.post("https://4b00-34-169-3-56.ngrok-free.app/query/", { user_query: currentMessage });
+      const { data } = await axios.post("http://127.0.0.1:8000/query/", { user_query: currentMessage });
       const formattedResponse = `Answer: ${data.answer}\n\nReasoning: ${data.reasoning}\n\nConfidence Score ${data.confidence_score}`;
       setMessages((prev) => [...prev, { sender: "AI", text: formattedResponse }]);
     } catch {

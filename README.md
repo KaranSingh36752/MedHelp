@@ -16,19 +16,19 @@ Follow these commands to create and configure the required Conda environment.
 ### Step 1: Create and Activate the Conda Environment
 
 ```bash
-conda create -n legal-llm-env python=3.9
-conda activate legal-llm-env
+conda create -n legal-rag python=3.9 -y
+conda activate legal-rag
 ```
 
-This creates a new Conda environment named `legal-llm-env` with Python version 3.9.
+This creates a new Conda environment named `legal-rag` with Python version 3.9.
 
 ### Step 2: Install PyTorch with CUDA Support
 
 ```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
-This installs PyTorch along with CUDA 11.8 support for GPU acceleration.
+This installs PyTorch along with CUDA 12.1 support for GPU acceleration.
 
 ### Step 3: Install Required Python Libraries
 
@@ -49,12 +49,12 @@ These libraries are necessary for the following functionalities:
 ### Step 4: Install Additional Dependencies
 
 ```bash
-pip install tiktoken protobuf
-pip install python-multipart
+pip install tiktoken protobuf python-multipart
 ```
 
 - **`tiktoken`**: Tokenizer library required for processing text efficiently.
 - **`protobuf`**: Protocol Buffers support, often required for model serialization.
+- **`python-multipart`**: Required for handling file uploads in FastAPI, specifically for handling multipart/form-data requests.
 
 ### Step 5: Upgrade Key Libraries
 
@@ -71,6 +71,7 @@ After completing the above steps, you can verify the environment setup by runnin
 ```bash
 python -c "import torch; print(torch.__version__)"
 python -c "import transformers; print(transformers.__version__)"
+python -c "import torch; print(torch.cuda.is_available())"
 ```
 
 If the commands execute without errors and return version numbers, the setup is successful.

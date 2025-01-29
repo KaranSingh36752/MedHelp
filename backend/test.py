@@ -2,7 +2,7 @@ import requests
 import json
 
 # Updated public URL from ngrok
-url = "https://2abf-34-82-22-217.ngrok-free.app/translate-pdf/"
+url = "http://127.0.0.1:8000/translate-pdf/"
 
 # File path to the PDF
 file_path = "/home/darshil-thakkar-929/Desktop/Projects/LegalDoc-Translate-Query-Assistant/documents/AFFAIRE C.P. ET M.N. c. FRANCE.pdf"
@@ -20,7 +20,7 @@ except requests.exceptions.RequestException as e:
     print(f"An error occurred: {e}")
 
 
-url = "https://2abf-34-82-22-217.ngrok-free.app/query/"
+url = "http://127.0.0.1:8000/query/"
 
 # User query
 user_query = "What were the key legal arguments in the case?"
