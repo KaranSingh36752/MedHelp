@@ -1,7 +1,6 @@
 import requests
 import json
 
-# Updated public URL from ngrok
 url = "http://127.0.0.1:8000/translate-pdf/"
 
 # File path to the PDF

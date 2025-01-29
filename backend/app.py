@@ -150,12 +150,6 @@ def translate_chunks(chunks, batch_size):
 
 # Function to store embeddings in Pinecone
 def store_embeddings(translated_chunks):
-    """
-    Converts translated text into embeddings and stores them in Pinecone.
-
-    Args:
-        translated_chunks (list): List of translated text chunks.
-    """
     try:
         # Retrieve the Pinecone API key from the .env file
         pinecone_api_key = os.getenv("PINECONE_API_KEY")
@@ -169,7 +163,7 @@ def store_embeddings(translated_chunks):
 
         index_name = "legal-llm-portal"
 
-        # Check if the index exists and delete it for a clean slate (optional)
+        # Check if the index exists and delete it if already exists
         if index_name in pc.list_indexes().names():
             pc.delete_index(index_name)
 
@@ -178,9 +172,7 @@ def store_embeddings(translated_chunks):
             name=index_name,
             dimension=384,  # Dimension size for the 'all-MiniLM-L6-v2' model
             metric="cosine",  # Using cosine similarity for comparisons
-            spec=ServerlessSpec(
-                cloud="aws", region="us-east-1"
-            ),  # Adjust cloud and region as needed
+            spec=ServerlessSpec(cloud="aws", region="us-east-1"),
         )
 
         # Connect to the index
@@ -231,17 +223,17 @@ async def process_pdf(
         raise HTTPException(status_code=400, detail="File size exceeds 10 MB.")
 
     try:
-        # Step 1: Process the PDF and translate chunks
+        # Process the PDF and translate chunks
         start_time = time()
         text = read_pdf(file)
         chunks = create_chunks(text, chunk_size, overlap)
         translated_chunks = translate_chunks(chunks, batch_size)
         processing_time = time() - start_time
 
-        # Step 2: Store embeddings in Pinecone in the background
+        # Store embeddings in Pinecone as a background task
         background_tasks.add_task(store_embeddings, translated_chunks)
 
-        # Step 3: Return immediate response with translated chunks
+        # Return immediate response with translated chunks
         return {
             "mime_type": mime_type,
             "translated_chunks": translated_chunks,
@@ -256,9 +248,6 @@ async def process_pdf(
 
 @app.post("/query/")
 async def query_llm(request: QueryRequest):
-    """
-    Endpoint to process user query, retrieve relevant context, and return LLM-generated responses.
-    """
     try:
         # Retrieve relevant context from Pinecone
         context = rag_pipeline.get_context(request.user_query)
