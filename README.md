@@ -39,7 +39,7 @@ The application consists of:
 ```
 LegalDoc-Translate-Query-Assistant
 │── backend
-│   ├── main.py                  # FastAPI server
+│   ├── app.py                  # FastAPI server
 │   ├── rag_pipeline.py          # Retrieval-Augmented-Generation pipeline
 │
 │── frontend
