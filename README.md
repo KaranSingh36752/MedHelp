@@ -1,84 +1,148 @@
-# Setting Up the Legal LLM Environment
+# LegalDoc-Translate-Query-Assistant
 
-This guide provides step-by-step instructions to set up the environment required for the Legal LLM project. The environment leverages Python 3.9 and includes necessary libraries for machine learning, natural language processing, and PDF handling.
+## Overview
 
-## Prerequisites
+**LegalDoc-Translate-Query-Assistant** is a powerful AI-driven legal document processing tool designed to:
 
-Ensure you have the following installed on your system:
-- [Anaconda](https://www.anaconda.com/products/distribution)
-- A compatible NVIDIA GPU (for CUDA acceleration)
-- Python 3.9
+- Translate legal case PDFs in any language to English.
+- Store translated content as embeddings in Pinecone.
+- Provide a **RAG-based LLM assistant** to answer legal queries using Groq's LLM.
 
-## Environment Setup Steps
+The application consists of:
+- **Backend**: A FastAPI server that handles translation, embedding storage, and query processing.
+- **Frontend**: A React.js web app built with TypeScript and Material UI for seamless interaction.
 
-Follow these commands to create and configure the required Conda environment.
+---
 
-### Step 1: Create and Activate the Conda Environment
+## Features
 
+**PDF Translation** - Convert any legal case document into English.
+**Vector Search with Pinecone** - Efficient retrieval of relevant legal information.
+**RAG-based LLM Assistant** - Provides evidence-based legal answers.
+**FastAPI Backend** - Scalable and efficient API services.
+**Frontend UI** - Built with React.js and Material UI for a smooth user experience.
+
+---
+
+## Project Structure
+
+```
+LegalDoc-Translate-Query-Assistant
+│── backend
+│   ├── main.py                  # FastAPI server
+│   ├── rag_pipeline.py          # Retrieval-Augmented-Generation pipeline
+│
+│── frontend
+│   ├── src
+│   │   ├── components           # UI Components
+│   │   ├── pages
+│   │   │   ├── Home.tsx         # PDF Translation Page
+│   │   │   ├── Assistant.tsx    # Query Assistant Page
+│   │   ├── App.tsx              # Main React Component
+│   │   ├── main.tsx             # React entry point
+│
+│── .env                         # Environment variables
+│── README.md                    # Documentation
+```
+
+---
+
+## Environment Setup
+
+### Prerequisites
+Ensure you have:
+- **Anaconda** installed.
+- A compatible **NVIDIA GPU** (for CUDA acceleration).
+- Python **3.9**.
+
+### Step 1: Create and Activate Conda Environment
 ```bash
 conda create -n legal-rag python=3.9 -y
 conda activate legal-rag
 ```
 
-This creates a new Conda environment named `legal-rag` with Python version 3.9.
-
 ### Step 2: Install PyTorch with CUDA Support
-
 ```bash
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
-This installs PyTorch along with CUDA 12.1 support for GPU acceleration.
-
-### Step 3: Install Required Python Libraries
-
+### Step 3: Install Required Libraries
 ```bash
 pip install transformers fastapi uvicorn python-magic PyPDF2 sentence-transformers pinecone-client python-dotenv groq
 ```
 
-These libraries are necessary for the following functionalities:
-- **`transformers`**: For NLP model handling.
-- **`fastapi`**: For building APIs.
-- **`uvicorn`**: ASGI server for FastAPI.
-- **`python-magic`**: File type detection.
-- **`PyPDF2`**: PDF processing.
-- **`sentence-transformers`**: Embedding-based models.
-- **`pinecone-client`**: Vector database interaction.
-- **`python-dotenv`**: Environment variable management.
-
 ### Step 4: Install Additional Dependencies
-
 ```bash
 pip install tiktoken protobuf python-multipart
 ```
 
-- **`tiktoken`**: Tokenizer library required for processing text efficiently.
-- **`protobuf`**: Protocol Buffers support, often required for model serialization.
-- **`python-multipart`**: Required for handling file uploads in FastAPI, specifically for handling multipart/form-data requests.
-
 ### Step 5: Upgrade Key Libraries
-
 ```bash
 pip install --upgrade transformers sentencepiece
 ```
 
-This ensures that the latest versions of `transformers` and `sentencepiece` (for tokenization) are installed.
-
-## Verifying Installation
-
-After completing the above steps, you can verify the environment setup by running:
-
+### Verification
+Run the following to confirm successful installation:
 ```bash
 python -c "import torch; print(torch.__version__)"
 python -c "import transformers; print(transformers.__version__)"
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-If the commands execute without errors and return version numbers, the setup is successful.
+---
 
-## Additional Notes
+## Running the Application
 
-- If any issues arise, ensure you have the correct CUDA version installed for your GPU.
-- Use `conda list` to check installed packages within the environment.
+### Backend (FastAPI)
+```bash
+cd backend
+python app.py
+```
+
+### Frontend (React.js)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The application will be available at `http://localhost:5173/`.
+
+---
+
+## Usage Guide
+
+### 1️⃣ **Upload a Legal Case PDF** (Home Page)
+- Upload a document in any language.
+- The backend will **translate** it into English.
+- Translated content is **stored in Pinecone** for future retrieval.
+
+### 2️⃣ **Query the Legal Assistant** (Assistant Page)
+- Ask legal questions related to the case.
+- The assistant retrieves relevant **context from Pinecone**.
+- It generates answers **ONLY based on the provided case PDF**.
+
+---
+
+## Results
+
+### **Home Page - PDF Translation**
+![Home Page Screenshot](assets/home1.jpeg)
+![Home Page Screenshot](assets/home2.jpeg)
+
+### **Assistant Page - Query Assistant**
+![Assistant Page Screenshot](assets/assistant1.jpeg)
+![Assistant Page Screenshot](assets/assistant2.jpeg)
+![Assistant Page Screenshot](assets/assistant3.jpeg)
+
+---
+
+## Technologies Used
+
+| Component  | Technologies Used |
+|------------|------------------|
+| Backend    | FastAPI, PyTorch, MBart, Pinecone, SentenceTransformers, Groq LLM |
+| Frontend   | React.js, TypeScript, Material UI |
+| Database   | Pinecone Vector DB |
 
 ---
