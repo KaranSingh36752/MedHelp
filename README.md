@@ -24,6 +24,16 @@ The application consists of:
 
 ---
 
+## Technologies Used
+
+| Component  | Technologies Used |
+|------------|------------------|
+| Backend    | FastAPI, PyTorch, MBart, Pinecone, SentenceTransformers, Groq LLM |
+| Frontend   | React.js, TypeScript, Material UI |
+| Database   | Pinecone Vector DB |
+
+---
+
 ## Project Structure
 
 ```
@@ -112,12 +122,12 @@ The application will be available at `http://localhost:5173/`.
 
 ## Usage Guide
 
-### 1️⃣ **Upload a Legal Case PDF** (Home Page)
+### 1️. **Upload a Legal Case PDF** (Home Page)
 - Upload a document in any language.
 - The backend will **translate** it into English.
 - Translated content is **stored in Pinecone** for future retrieval.
 
-### 2️⃣ **Query the Legal Assistant** (Assistant Page)
+### 2️. **Query the Legal Assistant** (Assistant Page)
 - Ask legal questions related to the case.
 - The assistant retrieves relevant **context from Pinecone**.
 - It generates answers **ONLY based on the provided case PDF**.
@@ -134,15 +144,5 @@ The application will be available at `http://localhost:5173/`.
 ![Assistant Page Screenshot](assets/assistant1.jpeg)
 ![Assistant Page Screenshot](assets/assistant2.jpeg)
 ![Assistant Page Screenshot](assets/assistant3.jpeg)
-
----
-
-## Technologies Used
-
-| Component  | Technologies Used |
-|------------|------------------|
-| Backend    | FastAPI, PyTorch, MBart, Pinecone, SentenceTransformers, Groq LLM |
-| Frontend   | React.js, TypeScript, Material UI |
-| Database   | Pinecone Vector DB |
 
 ---
