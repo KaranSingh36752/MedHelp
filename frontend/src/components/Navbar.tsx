@@ -27,7 +27,7 @@ export default function Navbar() {
               component="div"
               className="flex-grow text-blue-400"
             >
-              LEGAL-ASSISTANT
+              MedHelp Gpt
             </Typography>
             <Box className="hidden sm:flex">
               {navItems.map((item) => (

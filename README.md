@@ -1,12 +1,12 @@
-# LegalDoc-Translate-Query-Assistant
+# MedHelp
 
 ## Overview
 
-**LegalDoc-Translate-Query-Assistant** is a powerful AI-driven legal document processing tool designed to:
+**MedHelp - Assistant** is a powerful AI-driven Medical document processing tool designed to:
 
-- Translate legal case PDFs in any language to English.
+- Translate medical case PDFs in any language to English.
 - Store translated content as embeddings in Pinecone.
-- Provide a **RAG-based LLM assistant** to answer legal queries using Groq's LLM.
+- Provide a **RAG-based LLM assistant** to answer any medical queries using Groq's LLM.
 
 The application consists of:
 - **Backend**: A FastAPI server that handles translation, embedding storage, and query processing.
@@ -16,9 +16,9 @@ The application consists of:
 
 ## Features
 
-**PDF Translation** - Convert any legal case document into English.
-**Vector Search with Pinecone** - Efficient retrieval of relevant legal information.
-**RAG-based LLM Assistant** - Provides evidence-based legal answers.
+**PDF Translation** - Convert any medical document into English.
+**Vector Search with Pinecone** - Efficient retrieval of relevant medical information.
+**RAG-based LLM Assistant** - Provides evidence-based medical answers.
 **FastAPI Backend** - Scalable and efficient API services.
 **Frontend UI** - Built with React.js and Material UI for a smooth user experience.
 
@@ -37,7 +37,7 @@ The application consists of:
 ## Project Structure
 
 ```
-LegalDoc-Translate-Query-Assistant
+MedHelp
 │── backend
 │   ├── app.py                  # FastAPI server
 │   ├── rag_pipeline.py          # Retrieval-Augmented-Generation pipeline
@@ -128,7 +128,7 @@ The application will be available at `http://localhost:5173/`.
 - Translated content is **stored in Pinecone** for future retrieval.
 
 ### 2️. **Query the Legal Assistant** (Assistant Page)
-- Ask legal questions related to the case.
+- Ask medical questions related to the case.
 - The assistant retrieves relevant **context from Pinecone**.
 - It generates answers **ONLY based on the provided case PDF**.
 

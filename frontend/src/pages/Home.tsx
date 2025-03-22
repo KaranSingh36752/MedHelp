@@ -21,7 +21,7 @@ const Home: React.FC = () => {
 
   const handleFileUpload = async () => {
     if (!selectedPDF) {
-      alert("Please select a PDF file first.");
+      alert("Upload Pdf file here");
       return;
     }
 

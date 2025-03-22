@@ -39,7 +39,7 @@ const ChatScreen: React.FC = () => {
         {/* Header */}
         <Box className="flex justify-between items-center mb-4">
           <Typography variant="h4" fontWeight="bold" className="text-blue-300">
-            LEGAL-QUERY-ASSISTANT
+            MedHelp
           </Typography>
           <Button
             variant="contained"
